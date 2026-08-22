@@ -200,6 +200,7 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
   font-size:14px;font-weight:600;font-family:'Assistant',sans-serif;
 }
 .ghost{all:unset;display:block;width:100%;text-align:center;margin-top:10px;padding:10px;cursor:pointer;font-size:13px;color:var(--silver);font-family:'Assistant',sans-serif}
+.ghost[hidden]{display:none}
 
 @media (prefers-reduced-motion:no-preference){
   .rotor{animation:sweep 1.1s cubic-bezier(.2,.8,.2,1) both}
@@ -272,9 +273,10 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
   <div class="modalcard">
     <h3>הוספת אדם נוסף</h3>
     <p>אדם ראשון חינם. הוספת אנשים נוספים ומעבר מהיר ביניהם — בתשלום, לכל אדם בנפרד.</p>
-    <button class="cta" id="unlockBtn">שדרג והוסף</button>
+    <button class="cta" id="unlockBtn">רכישה — הוספת אדם</button>
+    <button class="ghost" id="restoreBtn" hidden>שחזור רכישות קודמות</button>
     <button class="ghost" id="closePaywall">לא עכשיו</button>
-    <p class="note">גרסת בדיקה: הפתיחה כאן מקומית וללא חיוב אמיתי. תשלום דרך App Store / Google Play יתווסף כשהאפליקציה תיארז לחנויות.</p>
+    <p class="note" id="paywallNote"></p>
   </div>
 </div>
 
@@ -293,10 +295,38 @@ function genId(){ return 'p' + Date.now().toString(36) + Math.random().toString(
 let db = {
   profiles: [{id:genId(), name:'', mikveh:'2026-08-13', len:28}],
   activeId: '',
-  premium: false
+  paidSlots: 0
 };
 db.activeId = db.profiles[0].id;
 function active(){ return db.profiles.find(p => p.id === db.activeId) || db.profiles[0]; }
+function allowedProfiles(){ return FREE_PROFILE_LIMIT + (db.paidSlots || 0); }
+
+/* ---------- purchases (RevenueCat) ---------- */
+// TODO: fill in real API keys once the RevenueCat project + store products exist.
+const RC_API_KEY = { ios: '', android: '' };
+const ADD_PERSON_PRODUCT_ID = 'add_person';
+let purchasesReady = false;
+
+function isNative(){ return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }
+function Purchases(){ return window.Capacitor.Plugins.Purchases; }
+
+function countPaidSlots(customerInfo){
+  return ((customerInfo && customerInfo.nonSubscriptionTransactions) || [])
+    .filter(t => t.productIdentifier === ADD_PERSON_PRODUCT_ID).length;
+}
+
+async function initPurchases(){
+  if (!isNative()) return;
+  const apiKey = RC_API_KEY[window.Capacitor.getPlatform()];
+  if (!apiKey) return; // no key configured yet — paywall runs in local test mode
+  try {
+    await Purchases().configure({ apiKey });
+    purchasesReady = true;
+    const { customerInfo } = await Purchases().getCustomerInfo();
+    const slots = countPaidSlots(customerInfo);
+    if (slots !== db.paidSlots){ db.paidSlots = slots; save(); }
+  } catch(e){ console.warn('RevenueCat init failed', e); }
+}
 
 const $ = id => document.getElementById(id);
 const midnight = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -475,7 +505,11 @@ async function load(){
   if (raw){
     try {
       const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.profiles) && parsed.profiles.length) db = parsed;
+      if (parsed && Array.isArray(parsed.profiles) && parsed.profiles.length){
+        if (parsed.paidSlots === undefined) parsed.paidSlots = parsed.premium ? 1 : 0;
+        delete parsed.premium;
+        db = parsed;
+      }
     } catch(e){}
   } else {
     const oldRaw = await storageGet(OLD_KEY);
@@ -508,7 +542,7 @@ function renderProfiles(){
 }
 
 function onAddProfile(){
-  if (!db.premium && db.profiles.length >= FREE_PROFILE_LIMIT){ $('paywall').hidden = false; return; }
+  if (db.profiles.length >= allowedProfiles()){ openPaywall(); return; }
   addProfileNow();
 }
 function addProfileNow(){
@@ -526,10 +560,42 @@ $('profiles').addEventListener('click', e => {
   save(); renderProfiles(); syncSettingsForm(); render();
 });
 
-$('unlockBtn').addEventListener('click', () => {
-  db.premium = true; save();
-  $('paywall').hidden = true;
-  addProfileNow();
+function openPaywall(){
+  $('paywall').hidden = false;
+  $('unlockBtn').disabled = false;
+  $('restoreBtn').hidden = !(isNative() && purchasesReady);
+  $('paywallNote').textContent = (isNative() && purchasesReady)
+    ? 'התשלום מתבצע דרך App Store / Google Play, לכל אדם בנפרד.'
+    : 'מצב בדיקה: אין עדיין חיבור תשלום אמיתי (יתחבר כשהאפליקציה תיארז לחנויות) — הפתיחה כאן מקומית וללא חיוב.';
+}
+
+$('unlockBtn').addEventListener('click', async () => {
+  if (isNative() && purchasesReady){
+    $('unlockBtn').disabled = true;
+    try {
+      const offerings = await Purchases().getOfferings();
+      const pkgs = (offerings.current && offerings.current.availablePackages) || [];
+      const pkg = pkgs.find(p => p.storeProduct.identifier === ADD_PERSON_PRODUCT_ID) || pkgs[0];
+      if (!pkg) throw new Error('המוצר עדיין לא הוגדר בחנות.');
+      const { customerInfo } = await Purchases().purchasePackage({ aPackage: pkg });
+      db.paidSlots = countPaidSlots(customerInfo); save();
+      $('paywall').hidden = true;
+      addProfileNow();
+    } catch(e){
+      if (!(e && e.userCancelled)) alert('הרכישה לא הושלמה. ' + (e && e.message ? e.message : 'נסו שוב מאוחר יותר.'));
+    } finally { $('unlockBtn').disabled = false; }
+  } else {
+    db.paidSlots = (db.paidSlots || 0) + 1; save();
+    $('paywall').hidden = true;
+    addProfileNow();
+  }
+});
+$('restoreBtn').addEventListener('click', async () => {
+  try {
+    const { customerInfo } = await Purchases().restorePurchases();
+    db.paidSlots = countPaidSlots(customerInfo); save();
+    alert('הרכישות שוחזרו.');
+  } catch(e){ alert('שחזור הרכישות נכשל.'); }
 });
 $('closePaywall').addEventListener('click', () => { $('paywall').hidden = true; });
 
@@ -556,7 +622,7 @@ $('len').addEventListener('change', e => {
 renderProfiles();
 syncSettingsForm();
 render();
-load();
+load().then(initPurchases);
 
 // keep the day current when the app is reopened or left open past midnight
 let lastDay = new Date().getDate();
