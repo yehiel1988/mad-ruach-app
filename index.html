@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>מד־רוח</title>
+<meta name="theme-color" content="#0B1026">
+<meta name="description" content="ארבעה שלבים בחודש. שלב אחד עכשיו.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="מד־רוח">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Assistant:wght@300;400;600&display=swap');
+
+:root{
+  --night:#0B1026;
+  --deep:#060A1A;
+  --water:#16255C;
+  --moon:#F3F0E4;
+  --silver:#96A2C4;
+  --amber:#E7B44A;
+  --rose:#D2778C;
+  --violet:#8C6BD4;
+  --slate:#6E7EA8;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+html{overscroll-behavior-y:none;-webkit-text-size-adjust:100%}
+body{
+  padding-top:calc(28px + env(safe-area-inset-top));
+  padding-bottom:calc(48px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(120% 70% at 50% -10%, #1B2A63 0%, rgba(11,16,38,0) 60%),
+    var(--night);
+  color:var(--moon);
+  font-family:'Assistant',-apple-system,'Segoe UI',sans-serif;
+  font-weight:300;
+  min-height:100%;
+  display:flex;
+  justify-content:center;
+  padding-inline:18px;
+}
+.app{width:100%;max-width:440px}
+
+/* header */
+.eyebrow{
+  font-size:11px;letter-spacing:.28em;color:var(--silver);
+  text-align:center;margin-bottom:10px;
+}
+h1{
+  font-family:'Frank Ruhl Libre',serif;font-weight:900;
+  font-size:clamp(38px,13vw,54px);line-height:.95;
+  text-align:center;letter-spacing:-.01em;
+}
+.sub{text-align:center;color:var(--silver);font-size:14px;margin-top:10px}
+
+/* dial */
+.dial{margin:26px auto 4px;display:block;width:min(300px,84vw);height:auto}
+.tick{stroke:#2C3A6E;stroke-width:1.6;stroke-linecap:round}
+.tick.past{stroke:#48598F}
+.marker-line{stroke:var(--moon);stroke-width:2}
+.arc{fill:none;stroke-width:5;stroke-linecap:round;opacity:.35;transition:opacity .4s}
+.arc.on{opacity:1}
+
+/* phase */
+.phase{text-align:center;margin-top:6px}
+.phase .num{
+  font-size:11px;letter-spacing:.28em;color:var(--silver);
+}
+.phase .name{
+  font-family:'Frank Ruhl Libre',serif;font-weight:700;
+  font-size:clamp(28px,8.5vw,38px);margin-top:6px;line-height:1.15;
+}
+.daycount{font-size:13px;color:var(--silver);margin-top:8px}
+
+/* verdict */
+.verdict{
+  margin-top:24px;border:1px solid #26325F;border-radius:2px;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.01));
+  padding:20px;text-align:center;
+}
+.verdict .q{font-size:13px;color:var(--silver);letter-spacing:.04em}
+.verdict .a{
+  font-family:'Frank Ruhl Libre',serif;font-weight:900;
+  font-size:clamp(30px,10vw,42px);margin:8px 0 10px;line-height:1;
+}
+.verdict .tip{font-size:15px;color:#CFD6EA;font-weight:400}
+
+/* timeline */
+.list{margin-top:26px;border-top:1px solid #1E2A55}
+.row{
+  display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:baseline;
+  padding:13px 2px;border-bottom:1px solid #1E2A55;
+}
+.row .idx{font-size:12px;color:var(--silver);width:14px}
+.row .txt{font-size:15px;color:#B9C2DE}
+.row .days{font-size:12px;color:#5D6B99;font-variant-numeric:tabular-nums}
+.row.now{background:linear-gradient(90deg,rgba(255,255,255,.06),transparent)}
+.row.now .txt{color:var(--moon);font-weight:600}
+.row.now .idx{color:var(--moon)}
+.row .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:8px;vertical-align:middle}
+
+/* calendar */
+.calhead{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin:34px 0 4px;
+}
+.calhead h2{
+  font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:22px;
+}
+.calhead span{font-size:12px;color:#5D6B99}
+.readout{
+  border:1px solid #26325F;border-radius:2px;padding:11px 13px;margin-top:12px;
+  font-size:14px;color:#CFD6EA;min-height:44px;display:flex;align-items:center;gap:9px;
+}
+.readout b{font-weight:600;color:var(--moon)}
+.month{margin-top:20px}
+.month h3{
+  font-family:'Frank Ruhl Libre',serif;font-weight:400;font-size:16px;
+  color:var(--silver);padding-bottom:8px;border-bottom:1px solid #1E2A55;
+}
+.wd,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.wd{margin:8px 0 4px}
+.wd span{text-align:center;font-size:10px;color:#4E5C89;letter-spacing:.05em}
+.grid button{
+  all:unset;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  font-size:12.5px;font-variant-numeric:tabular-nums;color:#C6CFE8;
+  border-radius:2px;cursor:pointer;position:relative;
+  font-family:'Assistant',sans-serif;
+}
+.grid button.pad{visibility:hidden;pointer-events:none}
+.grid button.past{opacity:.32}
+.grid button.today{box-shadow:inset 0 0 0 1.5px var(--moon);font-weight:600;color:#fff}
+.grid button.sel{box-shadow:inset 0 0 0 1.5px var(--amber)}
+.grid button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:14px}
+.legend div{display:flex;align-items:center;gap:6px;font-size:12px;color:#8E9AC0}
+.legend i{width:9px;height:9px;border-radius:2px;display:block}
+.more{
+  all:unset;display:block;width:100%;text-align:center;margin-top:22px;
+  border:1px solid #26325F;border-radius:2px;padding:13px;cursor:pointer;
+  font-size:13px;color:var(--silver);letter-spacing:.06em;
+  font-family:'Assistant',sans-serif;
+}
+.more:hover{background:rgba(255,255,255,.04);color:var(--moon)}
+.more:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* settings */
+details{margin-top:26px;border:1px solid #1E2A55;border-radius:2px}
+summary{
+  cursor:pointer;padding:14px 16px;font-size:13px;color:var(--silver);
+  letter-spacing:.06em;list-style:none;
+}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'↓';float:left;opacity:.6}
+details[open] summary::after{content:'↑'}
+.panel{padding:0 16px 18px}
+label{display:block;font-size:12px;color:var(--silver);margin:12px 0 6px}
+input[type=date],input[type=number]{
+  width:100%;background:#0A1030;border:1px solid #26325F;color:var(--moon);
+  font-family:'Assistant',sans-serif;font-size:16px;padding:11px 12px;border-radius:2px;
+}
+input:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.hint{font-size:12px;color:#5D6B99;margin-top:8px;line-height:1.5}
+footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-height:1.6}
+
+@media (prefers-reduced-motion:no-preference){
+  .rotor{animation:sweep 1.1s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes sweep{from{transform:rotate(-90deg);opacity:0}to{transform:rotate(0);opacity:1}}
+  .fade{animation:fade .8s ease .3s both}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="eyebrow">ארבעה שלבים בחודש</div>
+  <h1>מד־רוח</h1>
+  <p class="sub">מזינים תאריך מקווה אחד. מכאן זה מתגלגל לבד.</p>
+
+  <svg class="dial" viewBox="-130 -130 260 260" aria-hidden="true">
+    <g id="arcs"></g>
+    <g id="ticks"></g>
+    <g id="rotor" class="rotor">
+      <line id="marker" class="marker-line" x1="0" y1="-118" x2="0" y2="-104"/>
+    </g>
+    <circle cx="0" cy="0" r="72" fill="#060A1A" stroke="#1E2A55"/>
+    <path id="lit" fill="#F3F0E4" transform="scale(0.86)"/>
+  </svg>
+
+  <div class="phase fade">
+    <div class="num" id="phaseNum"></div>
+    <div class="name" id="phaseName"></div>
+    <div class="daycount" id="dayCount"></div>
+  </div>
+
+  <div class="verdict fade">
+    <div class="q">זמן טוב לפנות אליה?</div>
+    <div class="a" id="verdict"></div>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="calhead">
+    <h2>תחזית</h2>
+    <span>מהחודש הזה והלאה</span>
+  </div>
+  <div class="readout" id="readout">בחרו יום בלוח כדי לראות מה צפוי בו.</div>
+  <div id="calendar"></div>
+  <button class="more" id="more">להוסיף עוד 6 חודשים</button>
+
+  <div class="legend" id="legend"></div>
+
+  <details>
+    <summary>הגדרות</summary>
+    <div class="panel">
+      <label for="mikveh">תאריך המקווה האחרון</label>
+      <input type="date" id="mikveh" value="2026-08-13">
+      <label for="len">אורך מחזור (ימים)</label>
+      <input type="number" id="len" value="28" min="21" max="40">
+      <p class="hint">החישוב מניח שליל המקווה הוא היום ה־12 למחזור. אם אצלכם זה אחרת, שנו את אורך המחזור והתאריך עד שהשלב שמוצג מרגיש נכון.</p>
+    </div>
+  </details>
+
+  <footer>נכתב בהומור, לא בהלכה ולא ברפואה.<br>בספק — פשוט תשאלו אותה.</footer>
+</div>
+
+<script>
+const PHASES = [
+  {name:'היא צריכה שקט',      verdict:'לא עכשיו',      tip:'תה, שמיכה, ואפס שאלות פתוחות.',        color:'#6E7EA8'},
+  {name:'היא מבסוטית שיא',    verdict:'כן',            tip:'הזמן לבקש טובות ולתכנן חופשה.',        color:'#E7B44A'},
+  {name:'היא בעניין שלך מאד', verdict:'בהחלט כן',      tip:'תפנה אליה. פשוט תפנה אליה.',           color:'#D2778C'},
+  {name:'היא צריכה שוקולד ופוך', verdict:'רק עם שוקולד', tip:'נכנסים עם שוקולד, יוצאים בשקט.',    color:'#8C6BD4'}
+];
+const MIKVEH_DAY = 12;
+let state = {mikveh:'2026-08-13', len:28};
+
+const $ = id => document.getElementById(id);
+const midnight = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+function parseDate(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+
+function bounds(L){
+  const ov = Math.max(6, L - 14);
+  const b1 = Math.min(7, L - 3);
+  const b2 = Math.max(b1 + 1, ov - 3);
+  const b3 = Math.min(L - 1, Math.max(b2 + 1, ov + 3));
+  return [b1, b2, b3, L];
+}
+
+function moonPath(f, R){
+  if (f < 0.015 || f > 0.985) return '';
+  const c = Math.cos(2 * Math.PI * f);
+  const rx = Math.abs(c) * R;
+  const outer = f < 0.5 ? 1 : 0;
+  const inner = f < 0.5 ? (c > 0 ? 0 : 1) : (c > 0 ? 1 : 0);
+  return `M 0 ${-R} A ${R} ${R} 0 0 ${outer} 0 ${R} A ${rx.toFixed(2)} ${R} 0 0 ${inner} 0 ${-R} Z`;
+}
+
+function polar(r, deg){
+  const a = (deg - 90) * Math.PI / 180;
+  return [r * Math.cos(a), r * Math.sin(a)];
+}
+function arcPath(r, from, to){
+  const [x1,y1] = polar(r, from), [x2,y2] = polar(r, to);
+  const large = (to - from) > 180 ? 1 : 0;
+  return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+}
+
+function render(){
+  const L = state.len;
+  const start = parseDate(state.mikveh);
+  start.setDate(start.getDate() - (MIKVEH_DAY - 1));
+  const days = Math.floor((midnight(new Date()) - midnight(start)) / 86400000);
+  const day = ((days % L) + L) % L + 1;
+
+  const b = bounds(L);
+  const idx = day <= b[0] ? 0 : day <= b[1] ? 1 : day <= b[2] ? 2 : 3;
+  const p = PHASES[idx];
+
+  $('phaseNum').textContent = `שלב ${idx + 1} מתוך 4`;
+  $('phaseName').textContent = p.name;
+  $('verdict').textContent = p.verdict;
+  $('verdict').style.color = p.color;
+  $('tip').textContent = p.tip;
+
+  const left = b[idx] - day + 1;
+  $('dayCount').textContent = `יום ${day} מתוך ${L} · ${left === 1 ? 'השלב מתחלף מחר' : 'עוד ' + left + ' ימים לשלב הבא'}`;
+
+  // ticks
+  const ticks = b_ticks(L, day);
+  $('ticks').innerHTML = ticks;
+
+  // arcs
+  let arcs = '', from = 0;
+  for (let i = 0; i < 4; i++){
+    const to = b[i] / L * 360;
+    arcs += `<path class="arc ${i === idx ? 'on' : ''}" stroke="${PHASES[i].color}" d="${arcPath(111, from + 1.5, to - 1.5)}"/>`;
+    from = to;
+  }
+  $('arcs').innerHTML = arcs;
+
+  $('rotor').setAttribute('transform', `rotate(${((day - 0.5) / L * 360).toFixed(2)})`);
+  $('marker').setAttribute('stroke', p.color);
+  $('lit').setAttribute('d', moonPath((day - 1) / L, 72));
+
+  // list
+  let prev = 0, rows = '';
+  for (let i = 0; i < 4; i++){
+    rows += `<div class="row ${i === idx ? 'now' : ''}">
+      <span class="idx">${i + 1}</span>
+      <span class="txt">${PHASES[i].name}<span class="dot" style="background:${PHASES[i].color}"></span></span>
+      <span class="days">${prev + 1}–${b[i]}</span></div>`;
+    prev = b[i];
+  }
+  $('list').innerHTML = rows;
+
+  if (typeof renderCalendar === 'function') renderCalendar();
+}
+
+function b_ticks(L, day){
+  let out = '';
+  for (let i = 0; i < L; i++){
+    const [x1,y1] = polar(120, (i + 0.5) / L * 360);
+    const [x2,y2] = polar(i + 1 === day ? 108 : 114, (i + 0.5) / L * 360);
+    out += `<line class="tick ${i + 1 <= day ? 'past' : ''}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  }
+  return out;
+}
+
+/* ---------- forecast calendar ---------- */
+const MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const WD = ['א','ב','ג','ד','ה','ו','ש'];
+let monthsShown = 12, selected = '';
+
+function cycleStart(){
+  const s = parseDate(state.mikveh);
+  s.setDate(s.getDate() - (MIKVEH_DAY - 1));
+  return midnight(s);
+}
+function dayOf(date){
+  const L = state.len;
+  const diff = Math.floor((midnight(date) - cycleStart()) / 86400000);
+  return ((diff % L) + L) % L + 1;
+}
+function phaseOf(date){
+  const b = bounds(state.len), d = dayOf(date);
+  return d <= b[0] ? 0 : d <= b[1] ? 1 : d <= b[2] ? 2 : 3;
+}
+function rgba(hex, a){
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
+}
+
+function renderCalendar(){
+  const today = midnight(new Date());
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  let html = '';
+  for (let m = 0; m < monthsShown; m++){
+    const d0 = new Date(first.getFullYear(), first.getMonth() + m, 1);
+    const dim = new Date(d0.getFullYear(), d0.getMonth() + 1, 0).getDate();
+    html += `<div class="month"><h3>${MONTHS[d0.getMonth()]} ${d0.getFullYear()}</h3>
+      <div class="wd">${WD.map(w => `<span>${w}</span>`).join('')}</div><div class="grid">`;
+    for (let i = 0; i < d0.getDay(); i++) html += '<button class="pad" tabindex="-1"></button>';
+    for (let day = 1; day <= dim; day++){
+      const dt = new Date(d0.getFullYear(), d0.getMonth(), day);
+      const key = `${dt.getFullYear()}-${dt.getMonth()}-${day}`;
+      const pi = phaseOf(dt);
+      const isToday = +dt === +today;
+      const cls = [dt < today ? 'past' : '', isToday ? 'today' : '', selected === key ? 'sel' : ''].join(' ').trim();
+      html += `<button data-k="${key}" class="${cls}" style="background:${rgba(PHASES[pi].color, isToday ? .6 : .24)}">${day}</button>`;
+    }
+    html += '</div></div>';
+  }
+  $('calendar').innerHTML = html;
+  $('more').style.display = monthsShown >= 36 ? 'none' : 'block';
+
+  $('legend').innerHTML = PHASES.map((p, i) =>
+    `<div><i style="background:${rgba(p.color, .55)}"></i>${i + 1}. ${p.name}</div>`).join('');
+}
+
+$('calendar').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-k]');
+  if (!btn) return;
+  selected = btn.dataset.k;
+  const [y, m, d] = selected.split('-').map(Number);
+  const dt = new Date(y, m, d);
+  const p = PHASES[phaseOf(dt)];
+  $('readout').innerHTML =
+    `<b>${dt.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'long'})}</b> · יום ${dayOf(dt)} במחזור · ${p.name} · <b style="color:${p.color}">${p.verdict}</b>`;
+  renderCalendar();
+});
+
+$('more').addEventListener('click', () => { monthsShown += 6; renderCalendar(); });
+
+const KEY = 'cycle-settings';
+async function save(){
+  const val = JSON.stringify(state);
+  try { if (window.storage) { await window.storage.set(KEY, val); return; } } catch(e){}
+  try { window.localStorage.setItem(KEY, val); } catch(e){}
+}
+async function load(){
+  let raw = null;
+  try { if (window.storage) { const r = await window.storage.get(KEY); raw = r && r.value; } } catch(e){}
+  if (!raw) { try { raw = window.localStorage.getItem(KEY); } catch(e){} }
+  try { if (raw) state = Object.assign(state, JSON.parse(raw)); } catch(e){}
+  $('mikveh').value = state.mikveh;
+  $('len').value = state.len;
+  render();
+}
+
+$('mikveh').addEventListener('change', e => {
+  if (!e.target.value) return;
+  state.mikveh = e.target.value; save(); render();
+});
+$('len').addEventListener('change', e => {
+  const v = Math.min(40, Math.max(21, parseInt(e.target.value) || 28));
+  e.target.value = v; state.len = v; save(); render();
+});
+
+render();
+load();
+
+// keep the day current when the app is reopened or left open past midnight
+let lastDay = new Date().getDate();
+function refreshIfNewDay(){
+  const d = new Date().getDate();
+  if (d !== lastDay){ lastDay = d; render(); }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshIfNewDay(); });
+setInterval(refreshIfNewDay, 60000);
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
