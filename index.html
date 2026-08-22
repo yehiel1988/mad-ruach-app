@@ -329,6 +329,8 @@ async function initPurchases(){
 }
 
 const $ = id => document.getElementById(id);
+const ESC = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ESC[c]);
 const midnight = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 function parseDate(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
 
@@ -535,7 +537,7 @@ function syncSettingsForm(){
 
 function renderProfiles(){
   $('profiles').innerHTML = db.profiles.map((p,i) =>
-    `<button class="pill ${p.id===db.activeId?'active':''}" data-id="${p.id}">${p.name || 'אדם ' + (i+1)}</button>`
+    `<button class="pill ${p.id===db.activeId?'active':''}" data-id="${p.id}">${escapeHtml(p.name) || 'אדם ' + (i+1)}</button>`
   ).join('') + `<button class="pill add" id="addProfile">+ הוספת אדם</button>`;
   $('addProfile').addEventListener('click', onAddProfile);
   $('delProfile').hidden = db.profiles.length <= 1;
