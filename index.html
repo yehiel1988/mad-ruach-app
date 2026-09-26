@@ -177,6 +177,7 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
 }
 .pill.active{border-color:var(--amber);color:var(--moon);background:rgba(231,180,74,.1)}
 .pill.add{color:var(--amber);border-style:dashed}
+.pill.locked{opacity:.5;border-style:dashed}
 .pill:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 
 .danger{
@@ -272,8 +273,8 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
 <div class="overlay" id="paywall" hidden>
   <div class="modalcard">
     <h3>הוספת אדם נוסף</h3>
-    <p>אדם ראשון חינם. הוספת אנשים נוספים ומעבר מהיר ביניהם — בתשלום, לכל אדם בנפרד.</p>
-    <button class="cta" id="unlockBtn">רכישה — הוספת אדם</button>
+    <p>אדם ראשון חינם. כל אדם נוסף — מנוי חודשי מתחדש אוטומטית, 10 ₪ לחודש, לכל אדם בנפרד. ניתן לבטל בכל עת דרך הגדרות המנויים בחנות.</p>
+    <button class="cta" id="unlockBtn">הרשמה למנוי — 10 ₪ לחודש</button>
     <button class="ghost" id="restoreBtn" hidden>שחזור רכישות קודמות</button>
     <button class="ghost" id="closePaywall">לא עכשיו</button>
     <p class="note" id="paywallNote"></p>
@@ -295,24 +296,35 @@ function genId(){ return 'p' + Date.now().toString(36) + Math.random().toString(
 let db = {
   profiles: [{id:genId(), name:'', mikveh:'2026-08-13', len:28}],
   activeId: '',
-  paidSlots: 0
+  activeSlots: 0
 };
 db.activeId = db.profiles[0].id;
 function active(){ return db.profiles.find(p => p.id === db.activeId) || db.profiles[0]; }
-function allowedProfiles(){ return FREE_PROFILE_LIMIT + (db.paidSlots || 0); }
+function allowedProfiles(){ return FREE_PROFILE_LIMIT + (db.activeSlots || 0); }
 
 /* ---------- purchases (RevenueCat) ---------- */
 // TODO: fill in real API keys once the RevenueCat project + store products exist.
 const RC_API_KEY = { ios: '', android: '' };
-const ADD_PERSON_PRODUCT_ID = 'add_person';
+// Each additional profile beyond the free one is its own monthly subscription
+// product (10 ILS/month each) — Google Play subscriptions don't support
+// arbitrary quantity, so unlocking the Nth profile means subscribing to
+// SLOT_PRODUCT_IDS[N - FREE_PROFILE_LIMIT - 1].
+const SLOT_PRODUCT_IDS = ['person_slot_2', 'person_slot_3', 'person_slot_4'];
+const MAX_TOTAL_PROFILES = FREE_PROFILE_LIMIT + SLOT_PRODUCT_IDS.length;
 let purchasesReady = false;
 
 function isNative(){ return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }
 function Purchases(){ return window.Capacitor.Plugins.Purchases; }
 
-function countPaidSlots(customerInfo){
-  return ((customerInfo && customerInfo.nonSubscriptionTransactions) || [])
-    .filter(t => t.productIdentifier === ADD_PERSON_PRODUCT_ID).length;
+function countActiveSlots(customerInfo){
+  const active = Array.from((customerInfo && customerInfo.activeSubscriptions) || []);
+  return SLOT_PRODUCT_IDS.filter(id => active.includes(id)).length;
+}
+
+function enforceActiveWithinAllowed(){
+  const allowed = allowedProfiles();
+  const idx = db.profiles.findIndex(p => p.id === db.activeId);
+  if (idx >= allowed) db.activeId = db.profiles[0].id;
 }
 
 async function initPurchases(){
@@ -323,8 +335,11 @@ async function initPurchases(){
     await Purchases().configure({ apiKey });
     purchasesReady = true;
     const { customerInfo } = await Purchases().getCustomerInfo();
-    const slots = countPaidSlots(customerInfo);
-    if (slots !== db.paidSlots){ db.paidSlots = slots; save(); }
+    const slots = countActiveSlots(customerInfo);
+    if (slots !== db.activeSlots){
+      db.activeSlots = slots; enforceActiveWithinAllowed(); save();
+      renderProfiles(); syncSettingsForm(); render();
+    }
   } catch(e){ console.warn('RevenueCat init failed', e); }
 }
 
@@ -508,8 +523,10 @@ async function load(){
     try {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.profiles) && parsed.profiles.length){
-        if (parsed.paidSlots === undefined) parsed.paidSlots = parsed.premium ? 1 : 0;
-        delete parsed.premium;
+        if (parsed.activeSlots === undefined){
+          parsed.activeSlots = parsed.paidSlots !== undefined ? parsed.paidSlots : (parsed.premium ? 1 : 0);
+        }
+        delete parsed.paidSlots; delete parsed.premium;
         db = parsed;
       }
     } catch(e){}
@@ -523,6 +540,7 @@ async function load(){
     }
   }
   if (!db.profiles.find(p => p.id === db.activeId)) db.activeId = db.profiles[0].id;
+  enforceActiveWithinAllowed();
   renderProfiles();
   syncSettingsForm();
   render();
@@ -536,10 +554,15 @@ function syncSettingsForm(){
 }
 
 function renderProfiles(){
-  $('profiles').innerHTML = db.profiles.map((p,i) =>
-    `<button class="pill ${p.id===db.activeId?'active':''}" data-id="${p.id}">${escapeHtml(p.name) || 'אדם ' + (i+1)}</button>`
-  ).join('') + `<button class="pill add" id="addProfile">+ הוספת אדם</button>`;
-  $('addProfile').addEventListener('click', onAddProfile);
+  const allowed = allowedProfiles();
+  const pills = db.profiles.map((p,i) => {
+    const locked = i >= allowed;
+    const label = escapeHtml(p.name) || 'אדם ' + (i+1);
+    return `<button class="pill ${p.id===db.activeId?'active':''} ${locked?'locked':''}" data-id="${p.id}" ${locked?'data-locked="1"':''}>${locked?'🔒 ':''}${label}</button>`;
+  }).join('');
+  const addPill = db.profiles.length < MAX_TOTAL_PROFILES ? `<button class="pill add" id="addProfile">+ הוספת אדם</button>` : '';
+  $('profiles').innerHTML = pills + addPill;
+  if ($('addProfile')) $('addProfile').addEventListener('click', onAddProfile);
   $('delProfile').hidden = db.profiles.length <= 1;
 }
 
@@ -557,17 +580,23 @@ function addProfileNow(){
 
 $('profiles').addEventListener('click', e => {
   const btn = e.target.closest('button[data-id]');
-  if (!btn || btn.dataset.id === db.activeId) return;
+  if (!btn) return;
+  if (btn.dataset.locked){ openPaywall(); return; }
+  if (btn.dataset.id === db.activeId) return;
   db.activeId = btn.dataset.id;
   save(); renderProfiles(); syncSettingsForm(); render();
 });
+
+function nextSlotProductId(){
+  return SLOT_PRODUCT_IDS[db.profiles.length - FREE_PROFILE_LIMIT];
+}
 
 function openPaywall(){
   $('paywall').hidden = false;
   $('unlockBtn').disabled = false;
   $('restoreBtn').hidden = !(isNative() && purchasesReady);
   $('paywallNote').textContent = (isNative() && purchasesReady)
-    ? 'התשלום מתבצע דרך App Store / Google Play, לכל אדם בנפרד.'
+    ? 'מנוי חודשי מתחדש אוטומטית, 10 ₪ לחודש לכל אדם נוסף. אפשר לבטל בכל עת דרך הגדרות המנויים בחנות.'
     : 'מצב בדיקה: אין עדיין חיבור תשלום אמיתי (יתחבר כשהאפליקציה תיארז לחנויות) — הפתיחה כאן מקומית וללא חיוב.';
 }
 
@@ -575,19 +604,20 @@ $('unlockBtn').addEventListener('click', async () => {
   if (isNative() && purchasesReady){
     $('unlockBtn').disabled = true;
     try {
+      const productId = nextSlotProductId();
       const offerings = await Purchases().getOfferings();
       const pkgs = (offerings.current && offerings.current.availablePackages) || [];
-      const pkg = pkgs.find(p => p.storeProduct.identifier === ADD_PERSON_PRODUCT_ID) || pkgs[0];
+      const pkg = pkgs.find(p => p.storeProduct.identifier === productId);
       if (!pkg) throw new Error('המוצר עדיין לא הוגדר בחנות.');
       const { customerInfo } = await Purchases().purchasePackage({ aPackage: pkg });
-      db.paidSlots = countPaidSlots(customerInfo); save();
+      db.activeSlots = countActiveSlots(customerInfo); save();
       $('paywall').hidden = true;
       addProfileNow();
     } catch(e){
       if (!(e && e.userCancelled)) alert('הרכישה לא הושלמה. ' + (e && e.message ? e.message : 'נסו שוב מאוחר יותר.'));
     } finally { $('unlockBtn').disabled = false; }
   } else {
-    db.paidSlots = (db.paidSlots || 0) + 1; save();
+    db.activeSlots = (db.activeSlots || 0) + 1; save();
     $('paywall').hidden = true;
     addProfileNow();
   }
@@ -595,7 +625,8 @@ $('unlockBtn').addEventListener('click', async () => {
 $('restoreBtn').addEventListener('click', async () => {
   try {
     const { customerInfo } = await Purchases().restorePurchases();
-    db.paidSlots = countPaidSlots(customerInfo); save();
+    db.activeSlots = countActiveSlots(customerInfo); save();
+    enforceActiveWithinAllowed(); renderProfiles(); syncSettingsForm(); render();
     alert('הרכישות שוחזרו.');
   } catch(e){ alert('שחזור הרכישות נכשל.'); }
 });
