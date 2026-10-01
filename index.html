@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>מד־רוח</title>
+<title>Periodly</title>
 <meta name="theme-color" content="#0B1026">
 <meta name="description" content="ארבעה שלבים בחודש. שלב אחד עכשיו.">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="מד־רוח">
+<meta name="apple-mobile-web-app-title" content="Periodly">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <style>
@@ -45,6 +45,14 @@ body{
   padding-inline:18px;
 }
 .app{width:100%;max-width:440px}
+
+/* language switch */
+.langsw{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
+.langsw button{
+  all:unset;padding:4px 12px;border:1px solid #26325F;border-radius:100px;
+  font-family:'Assistant',sans-serif;font-size:11px;color:var(--silver);cursor:pointer;
+}
+.langsw button.active{border-color:var(--amber);color:var(--moon)}
 
 /* header */
 .eyebrow{
@@ -213,9 +221,13 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
 </head>
 <body>
 <div class="app">
-  <div class="eyebrow">ארבעה שלבים בחודש</div>
-  <h1>מד־רוח</h1>
-  <p class="sub">מזינים תאריך מקווה אחד. מכאן זה מתגלגל לבד.</p>
+  <div class="langsw" id="langsw">
+    <button data-lang="he">עברית</button>
+    <button data-lang="en">English</button>
+  </div>
+  <div class="eyebrow" id="t-eyebrow">ארבעה שלבים בחודש</div>
+  <h1>Periodly</h1>
+  <p class="sub" id="t-sub">מזינים תאריך מקווה אחד. מכאן זה מתגלגל לבד.</p>
 
   <div class="profiles" id="profiles"></div>
 
@@ -236,7 +248,7 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
   </div>
 
   <div class="verdict fade">
-    <div class="q">זמן טוב לפנות אליה?</div>
+    <div class="q" id="t-verdictQ">זמן טוב לפנות אליה?</div>
     <div class="a" id="verdict"></div>
     <div class="tip" id="tip"></div>
   </div>
@@ -244,8 +256,8 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
   <div class="list" id="list"></div>
 
   <div class="calhead">
-    <h2>תחזית</h2>
-    <span>מהחודש הזה והלאה</span>
+    <h2 id="t-forecast">תחזית</h2>
+    <span id="t-forecastSub">מהחודש הזה והלאה</span>
   </div>
   <div class="readout" id="readout">בחרו יום בלוח כדי לראות מה צפוי בו.</div>
   <div id="calendar"></div>
@@ -254,26 +266,26 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
   <div class="legend" id="legend"></div>
 
   <details>
-    <summary>הגדרות</summary>
+    <summary id="t-settings">הגדרות</summary>
     <div class="panel">
-      <label for="pname">שם (אופציונלי)</label>
+      <label for="pname" id="t-nameLabel">שם (אופציונלי)</label>
       <input type="text" id="pname" placeholder="אדם 1" maxlength="20">
-      <label for="mikveh">תאריך המקווה האחרון</label>
+      <label for="mikveh" id="t-mikvehLabel">תאריך המקווה האחרון</label>
       <input type="date" id="mikveh">
-      <label for="len">אורך מחזור (ימים)</label>
+      <label for="len" id="t-lenLabel">אורך מחזור (ימים)</label>
       <input type="number" id="len" min="21" max="40">
-      <p class="hint">החישוב מניח שליל המקווה הוא היום ה־12 למחזור. אם אצלכם זה אחרת, שנו את אורך המחזור והתאריך עד שהשלב שמוצג מרגיש נכון.</p>
+      <p class="hint" id="t-hint">החישוב מניח שליל המקווה הוא היום ה־12 למחזור. אם אצלכם זה אחרת, שנו את אורך המחזור והתאריך עד שהשלב שמוצג מרגיש נכון.</p>
       <button class="danger" id="delProfile" hidden>מחיקת הפרופיל הזה</button>
     </div>
   </details>
 
-  <footer>נכתב בהומור, לא בהלכה ולא ברפואה.<br>בספק — פשוט תשאלו אותה.</footer>
+  <footer id="t-footer">נכתב בהומור, לא בהלכה ולא ברפואה.<br>בספק — פשוט תשאלו אותה.</footer>
 </div>
 
 <div class="overlay" id="paywall" hidden>
   <div class="modalcard">
-    <h3>הוספת אדם נוסף</h3>
-    <p>אדם ראשון חינם. כל אדם נוסף — מנוי חודשי מתחדש אוטומטית, 10 ₪ לחודש, לכל אדם בנפרד. ניתן לבטל בכל עת דרך הגדרות המנויים בחנות.</p>
+    <h3 id="t-paywallTitle">הוספת אדם נוסף</h3>
+    <p id="t-paywallBody">אדם ראשון חינם. כל אדם נוסף — מנוי חודשי מתחדש אוטומטית, 10 ₪ לחודש, לכל אדם בנפרד. ניתן לבטל בכל עת דרך הגדרות המנויים בחנות.</p>
     <button class="cta" id="unlockBtn">הרשמה למנוי — 10 ₪ לחודש</button>
     <button class="ghost" id="restoreBtn" hidden>שחזור רכישות קודמות</button>
     <button class="ghost" id="closePaywall">לא עכשיו</button>
@@ -282,12 +294,73 @@ footer{margin-top:22px;text-align:center;font-size:12px;color:#4E5C89;line-heigh
 </div>
 
 <script>
-const PHASES = [
-  {name:'היא צריכה שקט',      verdict:'לא עכשיו',      tip:'תה, שמיכה, ואפס שאלות פתוחות.',        color:'#6E7EA8'},
-  {name:'היא מבסוטית שיא',    verdict:'כן',            tip:'הזמן לבקש טובות ולתכנן חופשה.',        color:'#E7B44A'},
-  {name:'היא בעניין שלך מאד', verdict:'בהחלט כן',      tip:'תפנה אליה. פשוט תפנה אליה.',           color:'#D2778C'},
-  {name:'היא צריכה שוקולד ופוך', verdict:'רק עם שוקולד', tip:'נכנסים עם שוקולד, יוצאים בשקט.',    color:'#8C6BD4'}
-];
+const PHASES_I18N = {
+  he: [
+    {name:'היא צריכה שקט',         verdict:'לא עכשיו',       tip:'תה, שמיכה, ואפס שאלות פתוחות.'},
+    {name:'היא מבסוטית שיא',       verdict:'כן',             tip:'הזמן לבקש טובות ולתכנן חופשה.'},
+    {name:'היא בעניין שלך מאד',    verdict:'בהחלט כן',       tip:'תפנה אליה. פשוט תפנה אליה.'},
+    {name:'היא צריכה שוקולד ופוך', verdict:'רק עם שוקולד',   tip:'נכנסים עם שוקולד, יוצאים בשקט.'}
+  ],
+  en: [
+    {name:'She needs quiet',              verdict:'Not now',          tip:'Tea, a blanket, and zero open-ended questions.'},
+    {name:'She’s in a great mood',    verdict:'Yes',              tip:'Time to ask for favors and plan a trip.'},
+    {name:'She’s very into you',      verdict:'Absolutely yes',   tip:'Talk to her. Just talk to her.'},
+    {name:'She needs chocolate and comfort', verdict:'Only with chocolate', tip:'Walk in with chocolate, walk out quietly.'}
+  ]
+};
+const PHASE_COLORS = ['#6E7EA8','#E7B44A','#D2778C','#8C6BD4'];
+let PHASES = PHASES_I18N.he.map((p,i) => ({...p, color: PHASE_COLORS[i]}));
+
+const T = {
+  he: {
+    dir:'rtl', dateLocale:'he-IL',
+    eyebrow:'ארבעה שלבים בחודש', sub:'מזינים תאריך מקווה אחד. מכאן זה מתגלגל לבד.',
+    addPerson:'+ הוספת אדם', person:i=>'אדם ' + i,
+    stageOf:n=>`שלב ${n} מתוך 4`, dayOfLen:(d,l)=>`יום ${d} מתוך ${l}`,
+    stageChangesTomorrow:'השלב מתחלף מחר', daysToNext:n=>`עוד ${n} ימים לשלב הבא`,
+    verdictQ:'זמן טוב לפנות אליה?', forecast:'תחזית', forecastSub:'מהחודש הזה והלאה',
+    readoutPlaceholder:'בחרו יום בלוח כדי לראות מה צפוי בו.', addMonths:'להוסיף עוד 6 חודשים',
+    settings:'הגדרות', nameLabel:'שם (אופציונלי)', mikvehLabel:'תאריך המקווה האחרון',
+    lenLabel:'אורך מחזור (ימים)',
+    hint:'החישוב מניח שליל המקווה הוא היום ה־12 למחזור. אם אצלכם זה אחרת, שנו את אורך המחזור והתאריך עד שהשלב שמוצג מרגיש נכון.',
+    deleteProfile:'מחיקת הפרופיל הזה', footer:'נכתב בהומור, לא בהלכה ולא ברפואה.<br>בספק — פשוט תשאלו אותה.',
+    paywallTitle:'הוספת אדם נוסף',
+    paywallBody:'אדם ראשון חינם. כל אדם נוסף — מנוי חודשי מתחדש אוטומטית, 10 ₪ לחודש, לכל אדם בנפרד. ניתן לבטל בכל עת דרך הגדרות המנויים בחנות.',
+    subscribeBtn:'הרשמה למנוי — 10 ₪ לחודש', restoreBtn:'שחזור רכישות קודמות', notNow:'לא עכשיו',
+    paywallNoteReady:'מנוי חודשי מתחדש אוטומטית, 10 ₪ לחודש לכל אדם נוסף. אפשר לבטל בכל עת דרך הגדרות המנויים בחנות.',
+    paywallNoteTest:'מצב בדיקה: אין עדיין חיבור תשלום אמיתי (יתחבר כשהאפליקציה תיארז לחנויות) — הפתיחה כאן מקומית וללא חיוב.',
+    purchaseFailed:'הרכישה לא הושלמה. ', tryAgain:'נסו שוב מאוחר יותר.',
+    productNotConfigured:'המוצר עדיין לא הוגדר בחנות.', restoreSuccess:'הרכישות שוחזרו.', restoreFailed:'שחזור הרכישות נכשל.',
+    confirmDelete:'למחוק את הפרופיל הזה?',
+    months:['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'],
+    weekdays:['א','ב','ג','ד','ה','ו','ש'], cycleDayOf:d=>`יום ${d} במחזור`
+  },
+  en: {
+    dir:'ltr', dateLocale:'en-US',
+    eyebrow:'Four stages a month', sub:'Enter one mikveh date. It figures out the rest.',
+    addPerson:'+ Add person', person:i=>'Person ' + i,
+    stageOf:n=>`Stage ${n} of 4`, dayOfLen:(d,l)=>`Day ${d} of ${l}`,
+    stageChangesTomorrow:'Stage changes tomorrow', daysToNext:n=>`${n} days to next stage`,
+    verdictQ:'Good time to reach out to her?', forecast:'Forecast', forecastSub:'From this month onward',
+    readoutPlaceholder:'Pick a day on the calendar to see what it holds.', addMonths:'Add 6 more months',
+    settings:'Settings', nameLabel:'Name (optional)', mikvehLabel:'Last mikveh date',
+    lenLabel:'Cycle length (days)',
+    hint:'The calculation assumes mikveh night is day 12 of the cycle. If yours is different, adjust the cycle length and date until the stage shown feels right.',
+    deleteProfile:'Delete this profile', footer:'Written in humor, not halacha, not medicine.<br>When in doubt — just ask her.',
+    paywallTitle:'Add another person',
+    paywallBody:'First person is free. Each additional person is an auto-renewing monthly subscription, 10 ILS/month, billed separately per person. Cancel anytime through the store’s subscription settings.',
+    subscribeBtn:'Subscribe — 10 ILS/month', restoreBtn:'Restore previous purchases', notNow:'Not now',
+    paywallNoteReady:'Auto-renewing monthly subscription, 10 ILS/month per additional person. Cancel anytime through the store’s subscription settings.',
+    paywallNoteTest:'Test mode: no real payment is wired up yet (comes once the app ships to the stores) — unlocking here is local and free.',
+    purchaseFailed:'The purchase did not go through. ', tryAgain:'Please try again later.',
+    productNotConfigured:'This product is not set up in the store yet.', restoreSuccess:'Purchases restored.', restoreFailed:'Restoring purchases failed.',
+    confirmDelete:'Delete this profile?',
+    months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    weekdays:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], cycleDayOf:d=>`day ${d} of cycle`
+  }
+};
+let uiLang = 'he';
+
 const MIKVEH_DAY = 12;
 const FREE_PROFILE_LIMIT = 1;
 
@@ -387,14 +460,14 @@ function render(){
   const idx = day <= b[0] ? 0 : day <= b[1] ? 1 : day <= b[2] ? 2 : 3;
   const p = PHASES[idx];
 
-  $('phaseNum').textContent = `שלב ${idx + 1} מתוך 4`;
+  $('phaseNum').textContent = T[uiLang].stageOf(idx + 1);
   $('phaseName').textContent = p.name;
   $('verdict').textContent = p.verdict;
   $('verdict').style.color = p.color;
   $('tip').textContent = p.tip;
 
   const left = b[idx] - day + 1;
-  $('dayCount').textContent = `יום ${day} מתוך ${L} · ${left === 1 ? 'השלב מתחלף מחר' : 'עוד ' + left + ' ימים לשלב הבא'}`;
+  $('dayCount').textContent = `${T[uiLang].dayOfLen(day, L)} · ${left === 1 ? T[uiLang].stageChangesTomorrow : T[uiLang].daysToNext(left)}`;
 
   // ticks
   const ticks = b_ticks(L, day);
@@ -438,8 +511,6 @@ function b_ticks(L, day){
 }
 
 /* ---------- forecast calendar ---------- */
-const MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
-const WD = ['א','ב','ג','ד','ה','ו','ש'];
 let monthsShown = 12, selected = '';
 
 function cycleStart(){
@@ -468,8 +539,8 @@ function renderCalendar(){
   for (let m = 0; m < monthsShown; m++){
     const d0 = new Date(first.getFullYear(), first.getMonth() + m, 1);
     const dim = new Date(d0.getFullYear(), d0.getMonth() + 1, 0).getDate();
-    html += `<div class="month"><h3>${MONTHS[d0.getMonth()]} ${d0.getFullYear()}</h3>
-      <div class="wd">${WD.map(w => `<span>${w}</span>`).join('')}</div><div class="grid">`;
+    html += `<div class="month"><h3>${T[uiLang].months[d0.getMonth()]} ${d0.getFullYear()}</h3>
+      <div class="wd">${T[uiLang].weekdays.map(w => `<span>${w}</span>`).join('')}</div><div class="grid">`;
     for (let i = 0; i < d0.getDay(); i++) html += '<button class="pad" tabindex="-1"></button>';
     for (let day = 1; day <= dim; day++){
       const dt = new Date(d0.getFullYear(), d0.getMonth(), day);
@@ -488,15 +559,20 @@ function renderCalendar(){
     `<div><i style="background:${rgba(p.color, .55)}"></i>${i + 1}. ${p.name}</div>`).join('');
 }
 
-$('calendar').addEventListener('click', e => {
-  const btn = e.target.closest('button[data-k]');
-  if (!btn) return;
-  selected = btn.dataset.k;
+function renderReadout(){
+  if (!selected){ $('readout').textContent = T[uiLang].readoutPlaceholder; return; }
   const [y, m, d] = selected.split('-').map(Number);
   const dt = new Date(y, m, d);
   const p = PHASES[phaseOf(dt)];
   $('readout').innerHTML =
-    `<b>${dt.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'long'})}</b> · יום ${dayOf(dt)} במחזור · ${p.name} · <b style="color:${p.color}">${p.verdict}</b>`;
+    `<b>${dt.toLocaleDateString(T[uiLang].dateLocale, {weekday:'long', day:'numeric', month:'long'})}</b> · ${T[uiLang].cycleDayOf(dayOf(dt))} · ${p.name} · <b style="color:${p.color}">${p.verdict}</b>`;
+}
+
+$('calendar').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-k]');
+  if (!btn) return;
+  selected = btn.dataset.k;
+  renderReadout();
   renderCalendar();
 });
 
@@ -541,10 +617,46 @@ async function load(){
   }
   if (!db.profiles.find(p => p.id === db.activeId)) db.activeId = db.profiles[0].id;
   enforceActiveWithinAllowed();
+  applyLang(db.lang || 'he');
+}
+
+function applyLang(lang){
+  uiLang = lang;
+  db.lang = lang;
+  PHASES = PHASES_I18N[lang].map((p,i) => ({...p, color: PHASE_COLORS[i]}));
+  document.documentElement.lang = lang;
+  document.documentElement.dir = T[lang].dir;
+  $('t-eyebrow').textContent = T[lang].eyebrow;
+  $('t-sub').textContent = T[lang].sub;
+  $('t-verdictQ').textContent = T[lang].verdictQ;
+  $('t-forecast').textContent = T[lang].forecast;
+  $('t-forecastSub').textContent = T[lang].forecastSub;
+  $('t-settings').textContent = T[lang].settings;
+  $('t-nameLabel').textContent = T[lang].nameLabel;
+  $('t-mikvehLabel').textContent = T[lang].mikvehLabel;
+  $('t-lenLabel').textContent = T[lang].lenLabel;
+  $('t-hint').textContent = T[lang].hint;
+  $('t-footer').innerHTML = T[lang].footer;
+  $('t-paywallTitle').textContent = T[lang].paywallTitle;
+  $('t-paywallBody').textContent = T[lang].paywallBody;
+  $('unlockBtn').textContent = T[lang].subscribeBtn;
+  $('restoreBtn').textContent = T[lang].restoreBtn;
+  $('closePaywall').textContent = T[lang].notNow;
+  $('more').textContent = T[lang].addMonths;
+  $('pname').placeholder = T[lang].person(1);
+  document.querySelectorAll('#langsw button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   renderProfiles();
   syncSettingsForm();
+  renderReadout();
   render();
 }
+
+$('langsw').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-lang]');
+  if (!btn || btn.dataset.lang === uiLang) return;
+  applyLang(btn.dataset.lang);
+  save();
+});
 
 function syncSettingsForm(){
   const p = active();
@@ -557,10 +669,10 @@ function renderProfiles(){
   const allowed = allowedProfiles();
   const pills = db.profiles.map((p,i) => {
     const locked = i >= allowed;
-    const label = escapeHtml(p.name) || 'אדם ' + (i+1);
+    const label = escapeHtml(p.name) || T[uiLang].person(i+1);
     return `<button class="pill ${p.id===db.activeId?'active':''} ${locked?'locked':''}" data-id="${p.id}" ${locked?'data-locked="1"':''}>${locked?'🔒 ':''}${label}</button>`;
   }).join('');
-  const addPill = db.profiles.length < MAX_TOTAL_PROFILES ? `<button class="pill add" id="addProfile">+ הוספת אדם</button>` : '';
+  const addPill = db.profiles.length < MAX_TOTAL_PROFILES ? `<button class="pill add" id="addProfile">${T[uiLang].addPerson}</button>` : '';
   $('profiles').innerHTML = pills + addPill;
   if ($('addProfile')) $('addProfile').addEventListener('click', onAddProfile);
   $('delProfile').hidden = db.profiles.length <= 1;
@@ -596,8 +708,8 @@ function openPaywall(){
   $('unlockBtn').disabled = false;
   $('restoreBtn').hidden = !(isNative() && purchasesReady);
   $('paywallNote').textContent = (isNative() && purchasesReady)
-    ? 'מנוי חודשי מתחדש אוטומטית, 10 ₪ לחודש לכל אדם נוסף. אפשר לבטל בכל עת דרך הגדרות המנויים בחנות.'
-    : 'מצב בדיקה: אין עדיין חיבור תשלום אמיתי (יתחבר כשהאפליקציה תיארז לחנויות) — הפתיחה כאן מקומית וללא חיוב.';
+    ? T[uiLang].paywallNoteReady
+    : T[uiLang].paywallNoteTest;
 }
 
 $('unlockBtn').addEventListener('click', async () => {
@@ -608,13 +720,13 @@ $('unlockBtn').addEventListener('click', async () => {
       const offerings = await Purchases().getOfferings();
       const pkgs = (offerings.current && offerings.current.availablePackages) || [];
       const pkg = pkgs.find(p => p.storeProduct.identifier === productId);
-      if (!pkg) throw new Error('המוצר עדיין לא הוגדר בחנות.');
+      if (!pkg) throw new Error(T[uiLang].productNotConfigured);
       const { customerInfo } = await Purchases().purchasePackage({ aPackage: pkg });
       db.activeSlots = countActiveSlots(customerInfo); save();
       $('paywall').hidden = true;
       addProfileNow();
     } catch(e){
-      if (!(e && e.userCancelled)) alert('הרכישה לא הושלמה. ' + (e && e.message ? e.message : 'נסו שוב מאוחר יותר.'));
+      if (!(e && e.userCancelled)) alert(T[uiLang].purchaseFailed + (e && e.message ? e.message : T[uiLang].tryAgain));
     } finally { $('unlockBtn').disabled = false; }
   } else {
     db.activeSlots = (db.activeSlots || 0) + 1; save();
@@ -627,14 +739,14 @@ $('restoreBtn').addEventListener('click', async () => {
     const { customerInfo } = await Purchases().restorePurchases();
     db.activeSlots = countActiveSlots(customerInfo); save();
     enforceActiveWithinAllowed(); renderProfiles(); syncSettingsForm(); render();
-    alert('הרכישות שוחזרו.');
-  } catch(e){ alert('שחזור הרכישות נכשל.'); }
+    alert(T[uiLang].restoreSuccess);
+  } catch(e){ alert(T[uiLang].restoreFailed); }
 });
 $('closePaywall').addEventListener('click', () => { $('paywall').hidden = true; });
 
 $('delProfile').addEventListener('click', () => {
   if (db.profiles.length <= 1) return;
-  if (!confirm('למחוק את הפרופיל הזה?')) return;
+  if (!confirm(T[uiLang].confirmDelete)) return;
   db.profiles = db.profiles.filter(p => p.id !== db.activeId);
   db.activeId = db.profiles[0].id;
   save(); renderProfiles(); syncSettingsForm(); render();
