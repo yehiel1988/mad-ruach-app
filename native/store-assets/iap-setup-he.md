@@ -18,7 +18,7 @@
 
 ## שלב 2 — RevenueCat
 1. הרשמה בחינם ב-app.revenuecat.com
-2. Create Project → הוסף אפליקציה, פלטפורמה Google Play, applicationId: `com.madruach.app`
+2. Create Project → הוסף אפליקציה, פלטפורמה Google Play, applicationId: `com.periodly.mahzor`
 3. **חיבור ל-Play Console (נדרש לאימות רכישות):** Play Console → Setup → API access → צור/קשר Google Cloud project → צור Service Account עם הרשאת "Financial data" → הורד קובץ JSON → העלה אותו בהגדרות RevenueCat של האפליקציה
 4. **Products:** צור ב-RevenueCat שלושה מוצרים עם אותם Product IDs בדיוק (`person_slot_2/3/4`), מקושרים למוצרי ה-Play Console המתאימים
 5. **Offering:** צור Offering אחד (למשל "default") עם שלושה Packages, אחד לכל מוצר

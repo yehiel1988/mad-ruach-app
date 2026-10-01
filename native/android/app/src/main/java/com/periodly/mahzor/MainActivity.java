@@ -1,4 +1,4 @@
-package com.madruach.app;
+package com.periodly.mahzor;
 
 import com.getcapacitor.BridgeActivity;
 
