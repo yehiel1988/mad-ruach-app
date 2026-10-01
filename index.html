@@ -719,7 +719,7 @@ $('unlockBtn').addEventListener('click', async () => {
       const productId = nextSlotProductId();
       const offerings = await Purchases().getOfferings();
       const pkgs = (offerings.current && offerings.current.availablePackages) || [];
-      const pkg = pkgs.find(p => p.storeProduct.identifier === productId);
+      const pkg = pkgs.find(p => p.storeProduct && p.storeProduct.identifier === productId);
       if (!pkg) throw new Error(T[uiLang].productNotConfigured);
       const { customerInfo } = await Purchases().purchasePackage({ aPackage: pkg });
       db.activeSlots = countActiveSlots(customerInfo); save();
